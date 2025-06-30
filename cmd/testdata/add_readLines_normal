@@ -1,0 +1,8 @@
+# comment: This is a sample .env file
+ENV="dev"
+
+DB_USER="user1"
+DB_PASSWORD="pass123"
+DB_HOST="localhost"
+DB_NAME="sampledb"
+DB_PORT="5432"
