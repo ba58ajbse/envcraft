@@ -90,20 +90,6 @@ func (a *AddCmd) readLines() error {
 	return nil
 }
 
-// func (c *AddCmd) readLines() error {
-// 	data, err := os.ReadFile(c.Options.FilePath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	lines := strings.SplitAfter(string(data), "\n")
-// 	// Remove trailing empty string if present
-// 	if len(lines) > 0 && lines[len(lines)-1] == "" {
-// 		lines = lines[:len(lines)-1]
-// 	}
-// 	c.OrgLines = lines
-// 	return nil
-// }
-
 // makeNewLines generates the new lines to be written to the file after adding the new variable.
 func (a *AddCmd) makeNewLines() error {
 	a.NewLines = slices.Clone(a.OrgLines)
