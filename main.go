@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ba58ajbse/envcraft/cmd"
+	"github.com/ba58ajbse/envcraft/cmd/add"
 )
 
 func main() {
@@ -29,12 +29,12 @@ func main() {
 }
 
 func cmdAdd(args []string) {
-	options, err := cmd.ParseAddOptions(args)
+	options, err := add.ParseAddOptions(args)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
-	addCmd, err := cmd.NewAddCmd(options)
+	addCmd, err := add.NewAddCmd(options)
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
