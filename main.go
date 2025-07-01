@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/ba58ajbse/envcraft/cmd/add"
+	"github.com/ba58ajbse/envcraft/cmd/update"
 )
 
 func main() {
@@ -18,8 +20,8 @@ func main() {
 	switch command {
 	case "add":
 		cmdAdd(opts)
-	case "set":
-		cmdUpdate()
+	case "update":
+		cmdUpdate(opts)
 	case "comment":
 		cmdComment()
 	default:
@@ -47,9 +49,27 @@ func cmdAdd(args []string) {
 	fmt.Println("✅ Successfully added.")
 }
 
-func cmdUpdate() {
-	// TODO: フラグ定義
-	fmt.Println("insert command executed")
+func cmdUpdate(args []string) {
+	options, err := update.ParseUpdateOptions(args)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	updateCmd, err := update.NewUpdateCmd(options)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	err = updateCmd.Exec()
+	if err != nil {
+		if errors.Is(err, update.ErrNoUpdated) {
+			fmt.Println("No matching key found. No update performed.")
+			os.Exit(0)
+		}
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("✅ Successfully updated.")
 }
 
 func cmdComment() {
