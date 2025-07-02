@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ba58ajbse/envcraft/cmd/add"
+	"github.com/ba58ajbse/envcraft/cmd/delete"
 	"github.com/ba58ajbse/envcraft/cmd/update"
 )
 
@@ -22,6 +23,8 @@ func main() {
 		cmdAdd(opts)
 	case "update":
 		cmdUpdate(opts)
+	case "delete":
+		cmdDelete(opts)
 	case "comment":
 		cmdComment()
 	default:
@@ -70,6 +73,29 @@ func cmdUpdate(args []string) {
 		os.Exit(1)
 	}
 	fmt.Println("✅ Successfully updated.")
+}
+
+func cmdDelete(args []string) {
+	options, err := delete.ParseDeleteOptions(args)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	deleteCmd, err := delete.NewDeleteCmd(options)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	err = deleteCmd.Exec()
+	if err != nil {
+		if errors.Is(err, update.ErrNoUpdated) {
+			fmt.Println("No matching key found. No deletion performed.")
+			os.Exit(0)
+		}
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("✅ Successfully deleted.")
 }
 
 func cmdComment() {
