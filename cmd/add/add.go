@@ -158,7 +158,7 @@ func (a *AddCmd) line() int {
 
 // ParseAddOptions parses command-line arguments and returns an AddOptions struct.
 func ParseAddOptions(opts []string) (*AddOptions, error) {
-	fs := flag.NewFlagSet("set", flag.ContinueOnError)
+	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	file := fs.String("f", "", "Path to .env file")
 	line := fs.Int("l", 0, "Line number to insert the variable (optional)")
 
