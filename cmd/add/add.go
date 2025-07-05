@@ -8,7 +8,8 @@ import (
 	"os"
 	"slices"
 	"strconv"
-	"strings"
+
+	"github.com/ba58ajbse/envcraft/cmd/utils"
 )
 
 // AddOptions holds the options for adding a new environment variable.
@@ -93,23 +94,23 @@ func (a *AddCmd) readLines() error {
 // makeNewLines generates the new lines to be written to the file after adding the new variable.
 func (a *AddCmd) makeNewLines() error {
 	a.NewLines = slices.Clone(a.OrgLines)
-	if a.line() == 0 {
-		if len(a.NewLines) == 0 || (len(a.NewLines) == 1 && a.NewLines[0] == "") {
+	if a.insertLineNum() == 0 {
+		if utils.IsEmptyOrBlank(a.NewLines) {
 			a.NewLines = []string{a.keyAndValue()}
 			return nil
 		}
-		if len(a.NewLines) > 0 && !strings.HasSuffix(a.NewLines[len(a.NewLines)-1], "\n") {
+		if utils.EndsWithoutNewline(a.NewLines) {
 			a.NewLines[len(a.NewLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
 		a.NewLines = slices.Insert(a.NewLines, len(a.NewLines), a.keyAndValue())
 		return nil
 	}
 
-	if a.line() > len(a.OrgLines) {
-		if len(a.NewLines) > 0 && !strings.HasSuffix(a.NewLines[len(a.NewLines)-1], "\n") {
+	if a.insertLineNum() > len(a.OrgLines) {
+		if utils.EndsWithoutNewline(a.NewLines) {
 			a.NewLines[len(a.NewLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		emplyLines := slices.Repeat([]string{"\n"}, a.line()-len(a.OrgLines)-1)
+		emplyLines := slices.Repeat([]string{"\n"}, a.insertLineNum()-len(a.OrgLines)-1)
 		a.NewLines = slices.Concat(a.NewLines, emplyLines, []string{a.keyAndValue()})
 		return nil
 	}
@@ -119,7 +120,7 @@ func (a *AddCmd) makeNewLines() error {
 		a.NewLines = []string{a.keyAndValue()}
 		return nil
 	}
-	a.NewLines = slices.Insert(a.NewLines, a.line()-1, a.keyAndValue()+"\n")
+	a.NewLines = slices.Insert(a.NewLines, a.insertLineNum()-1, a.keyAndValue()+"\n")
 	return nil
 }
 
@@ -152,7 +153,7 @@ func (a *AddCmd) keyAndValue() string {
 	return a.Options.Key + "=" + strconv.Quote(a.Options.Value)
 }
 
-func (a *AddCmd) line() int {
+func (a *AddCmd) insertLineNum() int {
 	return a.Options.Line
 }
 

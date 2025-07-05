@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ba58ajbse/envcraft/cmd/add"
+	"github.com/ba58ajbse/envcraft/cmd/comment"
 	"github.com/ba58ajbse/envcraft/cmd/delete"
 	"github.com/ba58ajbse/envcraft/cmd/update"
 )
@@ -26,7 +27,7 @@ func main() {
 	case "delete":
 		cmdDelete(opts)
 	case "comment":
-		cmdComment()
+		cmdComment(opts)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		os.Exit(1)
@@ -98,7 +99,21 @@ func cmdDelete(args []string) {
 	fmt.Println("✅ Successfully deleted.")
 }
 
-func cmdComment() {
-	// TODO: フラグ定義
-	fmt.Println("comment command executed")
+func cmdComment(args []string) {
+	options, err := comment.ParseCommentOptions(args)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	commentCmd, err := comment.NewCommentCmd(options)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	err = commentCmd.Exec()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		os.Exit(1)
+	}
+	fmt.Println("✅ Successfully add comment.")
 }
