@@ -27,6 +27,22 @@ type UpdateCmd struct {
 // ErrNoUpdated is returned when no matching key is found to update.
 var ErrNoUpdated = errors.New("no lines updated")
 
+func Run(args []string) error {
+	options, err := ParseUpdateOptions(args)
+	if err != nil {
+		return err
+	}
+	cmd, err := NewUpdateCmd(options)
+	if err != nil {
+		return err
+	}
+	err = cmd.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewUpdateCmd creates a new UpdateCmd instance with the specified options.
 func NewUpdateCmd(options *UpdateOptions) (*UpdateCmd, error) {
 	if options.FilePath == "" {

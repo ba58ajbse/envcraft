@@ -25,6 +25,22 @@ type DeleteCmd struct {
 // ErrNoUpdated is returned when no matching key is found to update.
 var ErrNoUpdated = errors.New("no lines updated")
 
+func Run(args []string) error {
+	options, err := ParseDeleteOptions(args)
+	if err != nil {
+		return err
+	}
+	cmd, err := NewDeleteCmd(options)
+	if err != nil {
+		return err
+	}
+	err = cmd.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewDeleteCmd creates a new DeleteCmd instance with the specified options.
 func NewDeleteCmd(options *DeleteOptions) (*DeleteCmd, error) {
 	if options.FilePath == "" {

@@ -27,6 +27,22 @@ type AddCmd struct {
 	NewLines []string
 }
 
+func Run(args []string) error {
+	options, err := ParseAddOptions(args)
+	if err != nil {
+		return err
+	}
+	cmd, err := NewAddCmd(options)
+	if err != nil {
+		return err
+	}
+	err = cmd.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewAddCmd creates a new AddCmd instance with the specified file path.
 func NewAddCmd(options *AddOptions) (*AddCmd, error) {
 	if options.FilePath == "" {

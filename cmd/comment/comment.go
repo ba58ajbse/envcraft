@@ -24,6 +24,22 @@ type CommentCmd struct {
 	OrgLines []string
 }
 
+func Run(args []string) error {
+	options, err := ParseCommentOptions(args)
+	if err != nil {
+		return err
+	}
+	cmd, err := NewCommentCmd(options)
+	if err != nil {
+		return err
+	}
+	err = cmd.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewCommentCmd creates a new CommentCmd instance with the specified file path.
 func NewCommentCmd(options *CommentOptions) (*CommentCmd, error) {
 	if options.FilePath == "" {
