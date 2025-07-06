@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ba58ajbse/envcraft/cmd/add"
-	"github.com/ba58ajbse/envcraft/cmd/comment"
-	"github.com/ba58ajbse/envcraft/cmd/delete"
-	"github.com/ba58ajbse/envcraft/cmd/update"
+	"github.com/ba58ajbse/envcraft/internal/commands/add"
+	"github.com/ba58ajbse/envcraft/internal/commands/comment"
+	"github.com/ba58ajbse/envcraft/internal/commands/delete"
+	"github.com/ba58ajbse/envcraft/internal/commands/update"
 )
 
 func main() {

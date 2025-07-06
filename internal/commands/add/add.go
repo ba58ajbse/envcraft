@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/ba58ajbse/envcraft/cmd/utils"
+	"github.com/ba58ajbse/envcraft/internal/utils"
 )
 
 // AddOptions holds the options for adding a new environment variable.
