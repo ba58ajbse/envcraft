@@ -1,13 +1,13 @@
 package delete
 
 import (
-	"bufio"
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
+
+	"github.com/ba58ajbse/envcraft/internal/fs"
 )
 
 // DeleteOptions holds the options for updating an environment variable.
@@ -75,24 +75,11 @@ func (c *DeleteCmd) Exec() error {
 
 // readLines reads all lines from the file specified in DeleteCmd and stores them in OrgLines.
 func (c *DeleteCmd) readLines() error {
-	envFile, err := os.Open(c.filePath())
+	lines, err := fs.ReadLines(c.filePath())
 	if err != nil {
-		return fmt.Errorf("error opening file %s: %w", c.filePath(), err)
+		return fmt.Errorf("error reading file %s: %w", c.filePath(), err)
 	}
-	defer envFile.Close()
-
-	reader := bufio.NewReader(envFile)
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err.Error() != "EOF" {
-				fmt.Printf("Error reading file %s: %v\n", c.filePath(), err)
-			}
-			c.OrgLines = append(c.OrgLines, line)
-			break
-		}
-		c.OrgLines = append(c.OrgLines, line)
-	}
+	c.OrgLines = lines
 
 	return nil
 }
@@ -132,21 +119,8 @@ func (c *DeleteCmd) makeNewLines() ([]string, error) {
 
 // apply writes the new lines to the file, overwriting the original content.
 func (c *DeleteCmd) apply(newLines []string) error {
-	out, err := os.OpenFile(c.filePath(), os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("error opening file %s for writing: %w", c.filePath(), err)
-	}
-	defer out.Close()
-
-	writer := bufio.NewWriter(out)
-	for _, line := range newLines {
-		if _, err := writer.WriteString(line); err != nil {
-			return fmt.Errorf("error writing to file %s: %w", c.filePath(), err)
-		}
-	}
-
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("error flushing writer for file %s: %w", c.filePath(), err)
+	if err := fs.WriteLines(c.filePath(), newLines); err != nil {
+		return fmt.Errorf("error writing to file %s: %w", c.filePath(), err)
 	}
 
 	return nil

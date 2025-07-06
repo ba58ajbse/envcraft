@@ -1,13 +1,12 @@
 package comment
 
 import (
-	"bufio"
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"slices"
 
+	"github.com/ba58ajbse/envcraft/internal/fs"
 	"github.com/ba58ajbse/envcraft/internal/utils"
 )
 
@@ -73,78 +72,53 @@ func (a *CommentCmd) Exec() error {
 }
 
 // readLines reads all lines from the file specified in CommentCmd and stores them in OrgLines.
-func (a *CommentCmd) readLines() error {
-	envFile, err := os.Open(a.filePath())
+func (c *CommentCmd) readLines() error {
+	lines, err := fs.ReadLines(c.filePath())
 	if err != nil {
-		return fmt.Errorf("error opening file %s: %w", a.filePath(), err)
+		return fmt.Errorf("error reading file %s: %w", c.filePath(), err)
 	}
-	defer envFile.Close()
-
-	reader := bufio.NewReader(envFile)
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err.Error() != "EOF" {
-				fmt.Printf("Error reading file %s: %v\n", a.filePath(), err)
-			}
-			a.OrgLines = append(a.OrgLines, line)
-			break
-		}
-		a.OrgLines = append(a.OrgLines, line)
-	}
+	c.OrgLines = lines
 
 	return nil
 }
 
 // makeNewLines generates the new lines to be written to the file after adding the new variable.
-func (a *CommentCmd) makeNewLines() ([]string, error) {
-	newLines := slices.Clone(a.OrgLines)
-	if a.insertLineNum() == 0 {
+func (c *CommentCmd) makeNewLines() ([]string, error) {
+	newLines := slices.Clone(c.OrgLines)
+	if c.insertLineNum() == 0 {
 		if utils.IsEmptyOrBlank(newLines) {
-			newLines = []string{a.value()}
+			newLines = []string{c.value()}
 			return newLines, nil
 		}
 		if utils.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		newLines = slices.Insert(newLines, len(newLines), a.value())
+		newLines = slices.Insert(newLines, len(newLines), c.value())
 		return newLines, nil
 	}
 
-	if a.insertLineNum() > len(a.OrgLines) {
+	if c.insertLineNum() > len(c.OrgLines) {
 		if utils.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		emplyLines := slices.Repeat([]string{"\n"}, a.insertLineNum()-len(a.OrgLines)-1)
-		newLines = slices.Concat(newLines, emplyLines, []string{a.value()})
+		emplyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
+		newLines = slices.Concat(newLines, emplyLines, []string{c.value()})
 		return newLines, nil
 	}
 
 	if len(newLines) == 1 && newLines[0] == "" {
 		// If the file is empty, add the new line
-		newLines = []string{a.value()}
+		newLines = []string{c.value()}
 		return newLines, nil
 	}
-	newLines = slices.Insert(newLines, a.insertLineNum()-1, a.value()+"\n")
+	newLines = slices.Insert(newLines, c.insertLineNum()-1, c.value()+"\n")
 	return newLines, nil
 }
 
 // apply writes the new lines to the file, overwriting the original content.
-func (a *CommentCmd) apply(newLines []string) error {
-	out, err := os.OpenFile(a.filePath(), os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("error opening file %s for writing: %w", a.filePath(), err)
-	}
-	defer out.Close()
-
-	writer := bufio.NewWriter(out)
-	for _, line := range newLines {
-		if _, err := writer.WriteString(line); err != nil {
-			return fmt.Errorf("error writing to file %s: %w", a.filePath(), err)
-		}
-	}
-	if err := writer.Flush(); err != nil {
-		return fmt.Errorf("error flushing writer: %w", err)
+func (c *CommentCmd) apply(newLines []string) error {
+	if err := fs.WriteLines(c.filePath(), newLines); err != nil {
+		return fmt.Errorf("error writing to file %s: %w", c.filePath(), err)
 	}
 
 	return nil
