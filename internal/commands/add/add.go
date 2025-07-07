@@ -23,7 +23,6 @@ type AddOptions struct {
 type AddCmd struct {
 	Options  AddOptions
 	OrgLines []string
-	NewLines []string
 }
 
 func Run(args []string) error {
@@ -51,18 +50,17 @@ func NewAddCmd(options *AddOptions) (*AddCmd, error) {
 	return &AddCmd{
 		Options:  *options,
 		OrgLines: []string{},
-		NewLines: []string{},
 	}, nil
 }
 
 // Exec is the main function that processes the add command using the provided options.
-func (a *AddCmd) Exec() error {
-	err := a.readLines()
+func (c *AddCmd) Exec() error {
+	err := c.readLines()
 	if err != nil {
 		return err
 	}
 
-	err = a.makeNewLines()
+	newlines, err := c.makeNewLines()
 	if err != nil {
 		return err
 	}
@@ -74,7 +72,7 @@ func (a *AddCmd) Exec() error {
 	// 	return
 	// }
 
-	err = a.apply()
+	err = c.apply(newlines)
 	if err != nil {
 		return err
 	}
@@ -83,68 +81,66 @@ func (a *AddCmd) Exec() error {
 }
 
 // readLines reads all lines from the file specified in AddCmd and stores them in OrgLines.
-func (a *AddCmd) readLines() error {
-	lines, err := fs.ReadLines(a.filePath())
+func (c *AddCmd) readLines() error {
+	lines, err := fs.ReadLines(c.filePath())
 	if err != nil {
-		return fmt.Errorf("error reading file %s: %w", a.filePath(), err)
+		return fmt.Errorf("error reading file %s: %w", c.filePath(), err)
 	}
-	a.OrgLines = lines
+	c.OrgLines = lines
 
 	return nil
 }
 
 // makeNewLines generates the new lines to be written to the file after adding the new variable.
-func (a *AddCmd) makeNewLines() error {
-	a.NewLines = slices.Clone(a.OrgLines)
-	if a.insertLineNum() == 0 {
-		if utils.IsEmptyOrBlank(a.NewLines) {
-			a.NewLines = []string{a.keyAndValue()}
-			return nil
+func (c *AddCmd) makeNewLines() ([]string, error) {
+	newLines := slices.Clone(c.OrgLines)
+	if c.insertLineNum() == 0 {
+		if utils.IsEmptyOrBlank(newLines) {
+			return []string{c.keyAndValue()}, nil
 		}
-		if utils.EndsWithoutNewline(a.NewLines) {
-			a.NewLines[len(a.NewLines)-1] += "\n" // Add a newline if the last line does not end with a newline
+		if utils.EndsWithoutNewline(newLines) {
+			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		a.NewLines = slices.Insert(a.NewLines, len(a.NewLines), a.keyAndValue())
-		return nil
+		newLines = slices.Insert(newLines, len(newLines), c.keyAndValue())
+		return newLines, nil
 	}
 
-	if a.insertLineNum() > len(a.OrgLines) {
-		if utils.EndsWithoutNewline(a.NewLines) {
-			a.NewLines[len(a.NewLines)-1] += "\n" // Add a newline if the last line does not end with a newline
+	if c.insertLineNum() > len(c.OrgLines) {
+		if utils.EndsWithoutNewline(newLines) {
+			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		emplyLines := slices.Repeat([]string{"\n"}, a.insertLineNum()-len(a.OrgLines)-1)
-		a.NewLines = slices.Concat(a.NewLines, emplyLines, []string{a.keyAndValue()})
-		return nil
+		emplyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
+		newLines = slices.Concat(newLines, emplyLines, []string{c.keyAndValue()})
+		return newLines, nil
 	}
 
-	if len(a.NewLines) == 1 && a.NewLines[0] == "" {
+	if len(newLines) == 1 && newLines[0] == "" {
 		// If the file is empty, add the new line
-		a.NewLines = []string{a.keyAndValue()}
-		return nil
+		return []string{c.keyAndValue()}, nil
 	}
-	a.NewLines = slices.Insert(a.NewLines, a.insertLineNum()-1, a.keyAndValue()+"\n")
-	return nil
+	newLines = slices.Insert(newLines, c.insertLineNum()-1, c.keyAndValue()+"\n")
+	return newLines, nil
 }
 
 // apply writes the new lines to the file, overwriting the original content.
-func (a *AddCmd) apply() error {
-	if err := fs.WriteLines(a.filePath(), a.NewLines); err != nil {
-		return fmt.Errorf("error writing to file %s: %w", a.filePath(), err)
+func (c *AddCmd) apply(newLines []string) error {
+	if err := fs.WriteLines(c.filePath(), newLines); err != nil {
+		return fmt.Errorf("error writing to file %s: %w", c.filePath(), err)
 	}
 
 	return nil
 }
 
-func (a *AddCmd) filePath() string {
-	return a.Options.FilePath
+func (c *AddCmd) filePath() string {
+	return c.Options.FilePath
 }
 
-func (a *AddCmd) keyAndValue() string {
-	return a.Options.Key + "=" + strconv.Quote(a.Options.Value)
+func (c *AddCmd) keyAndValue() string {
+	return c.Options.Key + "=" + strconv.Quote(c.Options.Value)
 }
 
-func (a *AddCmd) insertLineNum() int {
-	return a.Options.Line
+func (c *AddCmd) insertLineNum() int {
+	return c.Options.Line
 }
 
 // ParseAddOptions parses command-line arguments and returns an AddOptions struct.

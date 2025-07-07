@@ -75,11 +75,11 @@ func Test_MakeNewLines(t *testing.T) {
 				},
 				OrgLines: tt.orgLines,
 			}
-			err := cmd.makeNewLines()
+			newLines, err := cmd.makeNewLines()
 			if err != nil {
 				t.Fatalf("makeNewLines() error = %v", err)
 			}
-			assert.Equal(t, tt.want, cmd.NewLines)
+			assert.Equal(t, tt.want, newLines)
 		})
 	}
 }
@@ -192,10 +192,9 @@ func Test_apply(t *testing.T) {
 			tmpfile.Close()
 
 			cmd := &AddCmd{
-				Options:  AddOptions{FilePath: tmpfile.Name()},
-				NewLines: tt.newLines,
+				Options: AddOptions{FilePath: tmpfile.Name()},
 			}
-			err = cmd.apply()
+			err = cmd.apply(tt.newLines)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
