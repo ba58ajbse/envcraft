@@ -206,3 +206,51 @@ func Test_apply(t *testing.T) {
 		})
 	}
 }
+
+func Test_duplicateKey(t *testing.T) {
+	tests := map[string]struct {
+		orgLines []string
+		key      string
+		wantErr  error
+	}{
+		"no duplicate": {
+			orgLines: []string{"FOO=\"bar\"\n", "BAR=\"baz\""},
+			key:      "NEW",
+			wantErr:  nil,
+		},
+		"duplicate exists": {
+			orgLines: []string{"FOO=\"bar\"\n", "BAR=\"baz\""},
+			key:      "FOO",
+			wantErr:  ErrDuplicateKey,
+		},
+		"commented out duplicate": {
+			orgLines: []string{"#FOO=\"bar\"\n", "BAR=\"baz\""},
+			key:      "FOO",
+			wantErr:  nil,
+		},
+		"empty lines": {
+			orgLines: []string{""},
+			key:      "FOO",
+			wantErr:  nil,
+		},
+		"duplicate with spaces": {
+			orgLines: []string{" FOO = \"bar\"\n"},
+			key:      "FOO",
+			wantErr:  ErrDuplicateKey,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			cmd := &AddCmd{
+				Options:  AddOptions{Key: tt.key},
+				OrgLines: tt.orgLines,
+			}
+			err := cmd.duplicateKey()
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

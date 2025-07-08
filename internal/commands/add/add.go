@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/ba58ajbse/envcraft/internal/fs"
 	"github.com/ba58ajbse/envcraft/internal/utils"
@@ -24,6 +25,8 @@ type AddCmd struct {
 	Options  AddOptions
 	OrgLines []string
 }
+
+var ErrDuplicateKey = errors.New("duplicate key")
 
 func Run(args []string) error {
 	options, err := ParseAddOptions(args)
@@ -60,6 +63,10 @@ func (c *AddCmd) Exec() error {
 		return err
 	}
 
+	if err := c.duplicateKey(); err != nil {
+		return err
+	}
+
 	newlines, err := c.makeNewLines()
 	if err != nil {
 		return err
@@ -87,6 +94,23 @@ func (c *AddCmd) readLines() error {
 		return fmt.Errorf("error reading file %s: %w", c.filePath(), err)
 	}
 	c.OrgLines = lines
+
+	return nil
+}
+
+// duplicateKey checks if the key to be added already exists in the file (ignoring commented lines).
+// Returns ErrDuplicateKey if a duplicate is found, otherwise returns nil.
+func (c *AddCmd) duplicateKey() error {
+	for _, line := range c.OrgLines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.Split(line, "=")
+		key := strings.TrimSpace(parts[0])
+		if c.keyEqual(key) {
+			return ErrDuplicateKey
+		}
+	}
 
 	return nil
 }
@@ -137,6 +161,10 @@ func (c *AddCmd) filePath() string {
 
 func (c *AddCmd) keyAndValue() string {
 	return c.Options.Key + "=" + strconv.Quote(c.Options.Value)
+}
+
+func (c *AddCmd) keyEqual(key string) bool {
+	return c.Options.Key == key
 }
 
 func (c *AddCmd) insertLineNum() int {
