@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/ba58ajbse/envcraft/internal/fs"
-	"github.com/ba58ajbse/envcraft/internal/utils"
+	"github.com/ba58ajbse/envcraft/internal/lines"
 )
 
 // CommentOptions holds the options for adding a new environment variable.
@@ -86,11 +86,11 @@ func (c *CommentCmd) readLines() error {
 func (c *CommentCmd) makeNewLines() ([]string, error) {
 	newLines := slices.Clone(c.OrgLines)
 	if c.insertLineNum() == 0 {
-		if utils.IsEmptyOrBlank(newLines) {
+		if lines.IsEmptyOrBlank(newLines) {
 			newLines = []string{c.value()}
 			return newLines, nil
 		}
-		if utils.EndsWithoutNewline(newLines) {
+		if lines.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
 		newLines = slices.Insert(newLines, len(newLines), c.value())
@@ -98,7 +98,7 @@ func (c *CommentCmd) makeNewLines() ([]string, error) {
 	}
 
 	if c.insertLineNum() > len(c.OrgLines) {
-		if utils.EndsWithoutNewline(newLines) {
+		if lines.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
 		emplyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
