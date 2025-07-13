@@ -7,6 +7,7 @@ import (
 	"github.com/ba58ajbse/envcraft/internal/commands/add"
 	"github.com/ba58ajbse/envcraft/internal/commands/comment"
 	"github.com/ba58ajbse/envcraft/internal/commands/delete"
+	"github.com/ba58ajbse/envcraft/internal/commands/run"
 	"github.com/ba58ajbse/envcraft/internal/commands/update"
 )
 
@@ -23,10 +24,11 @@ func main() {
 		"update":  update.Run,
 		"delete":  delete.Run,
 		"comment": comment.Run,
+		"run":     run.Run,
 	}
 	cmd, ok := commands[command]
 	if !ok {
-		fmt.Println("Usage: envcraft [add|update|delete|comment] [flags]")
+		fmt.Println("Usage: envcraft [add|update|delete|comment|run] [flags]")
 		os.Exit(1)
 	}
 
@@ -35,5 +37,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("✅", command, "completed.")
+	fmt.Println("\n✅", command, "completed.")
 }
