@@ -155,13 +155,13 @@ func extractVarValue(val string, quote rune, insideQuote bool) (string, bool, er
 		return val, true, nil
 	}
 	if hasQuote(val) {
-		fmt.Println("\ncall has quote!!!", val)
 		// If quoted, only the quoted string is used as the value
 		lidx := lastQuote(val)
 		if lidx < 0 {
 			return "", false, fmt.Errorf("invalid syntax env value: %v", val)
 		}
-		val = strings.Trim(val[:lidx+1], "\"'`")
+		val = strings.Trim(val[:lidx+1], string(quote))
+		// val = strings.Trim(val[:lidx+1], "\"'`")
 	} else {
 		// If not quoted, treat everything after # as a comment
 		if idx := strings.Index(val, "#"); idx >= 0 {
@@ -193,8 +193,7 @@ func betweenQuote(str string) (rune, bool) {
 	runes := []rune(str)
 	last := runes[len(runes)-1]
 	if str[0] == '"' {
-		ret := last != '"'
-		return '"', ret
+		return '"', last != '"'
 	}
 
 	if str[0] == '\'' {
