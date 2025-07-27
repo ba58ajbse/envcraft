@@ -63,6 +63,82 @@ func Test_parseEnv(t *testing.T) {
 			want:    map[string]string{"FOO": "bar # notcomment", "BAR": "baz #notcomment"},
 			wantErr: false,
 		},
+		"single quotes containing double quotes": {
+			input:   `FOO='bar "hoge" fuga'`,
+			want:    map[string]string{"FOO": "bar \"hoge\" fuga"},
+			wantErr: false,
+		},
+		"double quotes containing single quotes": {
+			input:   `FOO="bar 'hoge' fuga"`,
+			want:    map[string]string{"FOO": "bar 'hoge' fuga"},
+			wantErr: false,
+		},
+		"single quotes containing backquotes": {
+			input:   "FOO='bar `hoge` fuga'",
+			want:    map[string]string{"FOO": "bar `hoge` fuga"},
+			wantErr: false,
+		},
+		"double quotes containing backquotes": {
+			input:   "FOO=\"bar `hoge` fuga\"",
+			want:    map[string]string{"FOO": "bar `hoge` fuga"},
+			wantErr: false,
+		},
+		"backquotes value": {
+			input:   "FOO=`bar`",
+			want:    map[string]string{"FOO": "bar"},
+			wantErr: false,
+		},
+		"backquotes containing double quotes": {
+			input:   "FOO=`bar \"hoge\" fuga`",
+			want:    map[string]string{"FOO": "bar \"hoge\" fuga"},
+			wantErr: false,
+		},
+		"backquotes containing single quotes": {
+			input:   "FOO=`bar 'hoge' fuga`",
+			want:    map[string]string{"FOO": "bar 'hoge' fuga"},
+			wantErr: false,
+		},
+		"backquotes containing both double and single quotes": {
+			input:   "FOO=`bar \"hoge\" 'hoge' fuga`",
+			want:    map[string]string{"FOO": "bar \"hoge\" 'hoge' fuga"},
+			wantErr: false,
+		},
+		"unquoted JSON value": {
+			input:   "FOO={\"hoge\": \"fuga\"}",
+			want:    map[string]string{"FOO": "{\"hoge\": \"fuga\"}"},
+			wantErr: false,
+		},
+		"single quoted JSON value": {
+			input:   "FOO='{\"hoge\": \"fuga\"}'",
+			want:    map[string]string{"FOO": "{\"hoge\": \"fuga\"}"},
+			wantErr: false,
+		},
+		"double quoted JSON value": {
+			input:   "FOO=\"{\"hoge\": \"fuga\"}\"",
+			want:    map[string]string{"FOO": "{\"hoge\": \"fuga\"}"},
+			wantErr: false,
+		},
+		"backquoted JSON value": {
+			input:   "FOO=`{\"hoge\": \"fuga\"}`",
+			want:    map[string]string{"FOO": "{\"hoge\": \"fuga\"}"},
+			wantErr: false,
+		},
+		"value contains =": {
+			input: "FOO=bar==",
+			want:  map[string]string{"FOO": "bar=="},
+		},
+		"unquoted value with newline": {
+			input: "FOO=hoge\nfuga",
+			want:  map[string]string{"FOO": "hoge\nfuga"},
+		},
+		"single quoted value with newline": {
+			input: "FOO='hoge\nfuga'",
+			want:  map[string]string{"FOO": "hoge\nfuga"},
+		},
+		"export statement": {
+			input: "export Foo=hoge",
+			want:  map[string]string{"Foo": "hoge"},
+		},
 	}
 
 	for name, tt := range tests {
@@ -74,6 +150,36 @@ func Test_parseEnv(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestRun(t *testing.T) {
+	tests := map[string]struct {
+		args    []string
+		wantErr bool
+	}{
+		"success: env command with .env": {
+			args:    []string{"-f", "testdata/.env", "--", "env"},
+			wantErr: false,
+		},
+		"error: missing file": {
+			args:    []string{"-f", "testdata/notfound.env", "--", "env"},
+			wantErr: true,
+		},
+		"error: missing command": {
+			args:    []string{"-f", "testdata/.env"},
+			wantErr: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := Run(tt.args)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
