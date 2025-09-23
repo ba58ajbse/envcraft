@@ -98,6 +98,9 @@ func (c *UpdateCmd) makeNewLines() ([]string, error) {
 	updatedFlag := false
 	for i, line := range c.OrgLines {
 		parts := strings.Split(line, "=")
+		if len(parts) < 2 {
+			continue
+		}
 		key := strings.TrimSpace(parts[0])
 		if c.keyEqual(key) {
 			if strings.HasSuffix(line, "\n") {
@@ -143,8 +146,8 @@ func (s *UpdateCmd) keyAndValue() string {
 
 // ParseUpdateOptions parses command-line arguments and returns an UpdateOptions struct.
 func ParseUpdateOptions(opts []string) (*UpdateOptions, error) {
-	fs := flag.NewFlagSet("update", flag.ContinueOnError)
-	file := fs.String("f", "", "Path to .env file")
+	flagSet := flag.NewFlagSet("update", flag.ContinueOnError)
+	file := flagSet.String("f", "", "Path to .env file")
 
 	if len(opts) < 2 {
 		return nil, errors.New("key and value are required")
@@ -153,12 +156,12 @@ func ParseUpdateOptions(opts []string) (*UpdateOptions, error) {
 	value := opts[1]
 	flags := opts[2:]
 
-	if err := fs.Parse(flags); err != nil {
+	if err := flagSet.Parse(flags); err != nil {
 		return nil, err
 	}
 	if *file == "" {
 		fmt.Println("Error: -f flag is required")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("file path is required")
 	}
 

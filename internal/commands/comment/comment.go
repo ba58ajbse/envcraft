@@ -101,8 +101,8 @@ func (c *CommentCmd) makeNewLines() ([]string, error) {
 		if lines.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		emplyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
-		newLines = slices.Concat(newLines, emplyLines, []string{c.value()})
+		emptyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
+		newLines = slices.Concat(newLines, emptyLines, []string{c.value()})
 		return newLines, nil
 	}
 

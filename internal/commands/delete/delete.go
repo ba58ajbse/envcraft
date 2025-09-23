@@ -95,7 +95,14 @@ func (c *DeleteCmd) makeNewLines() ([]string, error) {
 
 	updatedFlag := false
 	for i, line := range c.OrgLines {
-		parts := strings.Split(line, "=")
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue // Skip empty lines and comments
+		}
+		if !strings.Contains(line, "=") {
+			continue // Skip lines without '='
+		}
+		parts := strings.SplitN(line, "=", 2)
 		key := strings.TrimSpace(parts[0])
 		if c.keyEqual(key) {
 			newLines = slices.Delete(newLines, i, i+1) // Remove the line with the matching key
@@ -142,7 +149,7 @@ func ParseDeleteOptions(opts []string) (*DeleteOptions, error) {
 	file := fs.String("f", "", "Path to .env file")
 
 	if len(opts) < 2 {
-		return nil, errors.New("key and value are required")
+		return nil, errors.New("key is required")
 	}
 	key := opts[0]
 	flags := opts[1:]

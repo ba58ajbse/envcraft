@@ -106,9 +106,11 @@ func (c *AddCmd) duplicateKey() error {
 			continue
 		}
 		parts := strings.Split(line, "=")
-		key := strings.TrimSpace(parts[0])
-		if c.keyEqual(key) {
-			return ErrDuplicateKey
+		if len(parts) > 1 {
+			key := strings.TrimSpace(parts[0])
+			if c.keyEqual(key) {
+				return ErrDuplicateKey
+			}
 		}
 	}
 
@@ -133,8 +135,8 @@ func (c *AddCmd) makeNewLines() ([]string, error) {
 		if lines.EndsWithoutNewline(newLines) {
 			newLines[len(newLines)-1] += "\n" // Add a newline if the last line does not end with a newline
 		}
-		emplyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
-		newLines = slices.Concat(newLines, emplyLines, []string{c.keyAndValue()})
+		emptyLines := slices.Repeat([]string{"\n"}, c.insertLineNum()-len(c.OrgLines)-1)
+		newLines = slices.Concat(newLines, emptyLines, []string{c.keyAndValue()})
 		return newLines, nil
 	}
 
