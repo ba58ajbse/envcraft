@@ -2,6 +2,7 @@ package add
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,7 +93,12 @@ func Test_ParseAddOptions(t *testing.T) {
 	}{
 		"normal case": {
 			opts:    []string{"KEY", "VALUE", "-f", "test.env", "-l", "2"},
-			want:    &AddOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env", Line: 2},
+			want:    &AddOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env", Line: 2, Create: false},
+			wantErr: false,
+		},
+		"create flag": {
+			opts:    []string{"KEY", "VALUE", "-f", "test.env", "-c"},
+			want:    &AddOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env", Line: 0, Create: true},
 			wantErr: false,
 		},
 		"missing key/value": {
@@ -205,6 +211,28 @@ func Test_apply(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExec_CreatesFileWhenOptionEnabled(t *testing.T) {
+	tmpDir := t.TempDir()
+	targetFile := filepath.Join(tmpDir, "new.env")
+
+	options := &AddOptions{
+		Key:      "FOO",
+		Value:    "bar",
+		FilePath: targetFile,
+		Create:   true,
+	}
+
+	cmd, err := NewAddCmd(options)
+	assert.NoError(t, err)
+
+	err = cmd.Exec()
+	assert.NoError(t, err)
+
+	data, err := os.ReadFile(targetFile)
+	assert.NoError(t, err)
+	assert.Equal(t, "FOO=\"bar\"", string(data))
 }
 
 func Test_duplicateKey(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ type AddOptions struct {
 	Value    string
 	FilePath string
 	Line     int
+	Create   bool
 }
 
 // AddCmd represents the command for adding a new environment variable to a file.
@@ -60,7 +62,13 @@ func NewAddCmd(options *AddOptions) (*AddCmd, error) {
 func (c *AddCmd) Exec() error {
 	err := c.readLines()
 	if err != nil {
-		return err
+		if c.Options.Create && errors.Is(err, os.ErrNotExist) {
+			if err := c.createEmptyFile(); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 
 	if err := c.duplicateKey(); err != nil {
@@ -157,6 +165,18 @@ func (c *AddCmd) apply(newLines []string) error {
 	return nil
 }
 
+func (c *AddCmd) createEmptyFile() error {
+	file, err := os.Create(c.filePath())
+	if err != nil {
+		return fmt.Errorf("error creating file %s: %w", c.filePath(), err)
+	}
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("error closing file %s: %w", c.filePath(), err)
+	}
+	c.OrgLines = []string{}
+	return nil
+}
+
 func (c *AddCmd) filePath() string {
 	return c.Options.FilePath
 }
@@ -178,6 +198,8 @@ func ParseAddOptions(opts []string) (*AddOptions, error) {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	file := fs.String("f", "", "Path to .env file")
 	line := fs.Int("l", 0, "Line number to insert the variable (optional)")
+	create := fs.Bool("c", false, "Create the file if it does not exist")
+	fs.BoolVar(create, "create", false, "Create the file if it does not exist")
 
 	if len(opts) < 2 {
 		return nil, errors.New("key and value are required")
@@ -206,6 +228,7 @@ func ParseAddOptions(opts []string) (*AddOptions, error) {
 		Value:    value,
 		FilePath: *file,
 		Line:     *line,
+		Create:   *create,
 	}, nil
 }
 
