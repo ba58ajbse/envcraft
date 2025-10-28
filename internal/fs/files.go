@@ -2,7 +2,9 @@ package fs
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -18,11 +20,11 @@ func ReadLines(filePath string) ([]string, error) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			if err.Error() != "EOF" {
-				fmt.Printf("Error reading file %s: %v\n", filePath, err)
+			if errors.Is(err, io.EOF) {
+				lines = append(lines, line)
+				break
 			}
-			lines = append(lines, line)
-			break
+			return nil, fmt.Errorf("error reading file %s: %w", filePath, err)
 		}
 		lines = append(lines, line)
 	}
