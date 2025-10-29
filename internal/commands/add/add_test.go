@@ -101,6 +101,11 @@ func Test_ParseAddOptions(t *testing.T) {
 			want:    &AddOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env", Line: 0, Create: true},
 			wantErr: false,
 		},
+		"flags before key/value": {
+			opts:    []string{"-f", "test.env", "-l", "2", "--create", "KEY", "VALUE"},
+			want:    &AddOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env", Line: 2, Create: true},
+			wantErr: false,
+		},
 		"missing key/value": {
 			opts:    []string{"KEY"},
 			want:    nil,

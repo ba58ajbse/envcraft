@@ -195,31 +195,41 @@ func (c *AddCmd) insertLineNum() int {
 
 // ParseAddOptions parses command-line arguments and returns an AddOptions struct.
 func ParseAddOptions(opts []string) (*AddOptions, error) {
-	fs := flag.NewFlagSet("add", flag.ContinueOnError)
-	file := fs.String("f", "", "Path to .env file")
-	line := fs.Int("l", 0, "Line number to insert the variable (optional)")
-	create := fs.Bool("c", false, "Create the file if it does not exist")
-	fs.BoolVar(create, "create", false, "Create the file if it does not exist")
+	flagSet := flag.NewFlagSet("add", flag.ContinueOnError)
+	file := flagSet.String("f", "", "Path to .env file")
+	line := flagSet.Int("l", 0, "Line number to insert the variable (optional)")
+	create := flagSet.Bool("c", false, "Create the file if it does not exist")
+	flagSet.BoolVar(create, "create", false, "Create the file if it does not exist")
 
-	if len(opts) < 2 {
-		return nil, errors.New("key and value are required")
-	}
-	key := opts[0]
-	value := opts[1]
-	flags := opts[2:]
+	var key, value string
 
-	if err := fs.Parse(flags); err != nil {
-		return nil, err
+	if len(opts) >= 2 && !strings.HasPrefix(opts[0], "-") && !strings.HasPrefix(opts[1], "-") {
+		key = opts[0]
+		value = opts[1]
+		if err := flagSet.Parse(opts[2:]); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := flagSet.Parse(opts); err != nil {
+			return nil, err
+		}
+		args := flagSet.Args()
+		if len(args) < 2 {
+			return nil, errors.New("key and value are required")
+		}
+		key = args[0]
+		value = args[1]
 	}
+
 	if *file == "" {
 		fmt.Println("Error: -f flag is required")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("file path is required")
 	}
 
 	if *line < 0 {
 		fmt.Println("Error: -l must be a non-negative integer")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("line number must be a non-negative integer")
 	}
 
