@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/ba58ajbse/envcraft/internal/fs"
 	"github.com/ba58ajbse/envcraft/internal/lines"
@@ -138,28 +139,40 @@ func (a *CommentCmd) insertLineNum() int {
 
 // ParseCommentOptions parses command-line arguments and returns an CommentOptions struct.
 func ParseCommentOptions(opts []string) (*CommentOptions, error) {
-	fs := flag.NewFlagSet("comment", flag.ContinueOnError)
-	file := fs.String("f", "", "Path to .env file")
-	line := fs.Int("l", 0, "Line number to insert comment (optional)")
+	flagSet := flag.NewFlagSet("comment", flag.ContinueOnError)
+	file := flagSet.String("f", "", "Path to .env file")
+	line := flagSet.Int("l", 0, "Line number to insert comment (optional)")
 
-	if len(opts) < 1 {
-		return nil, errors.New("comment required")
-	}
-	value := opts[0]
-	flags := opts[1:]
+	var value string
 
-	if err := fs.Parse(flags); err != nil {
-		return nil, err
+	if len(opts) >= 1 && !strings.HasPrefix(opts[0], "-") {
+		value = opts[0]
+		if err := flagSet.Parse(opts[1:]); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := flagSet.Parse(opts); err != nil {
+			return nil, err
+		}
+		args := flagSet.Args()
+		if len(args) < 1 {
+			return nil, errors.New("comment required")
+		}
+		value = args[0]
+		if strings.HasPrefix(value, "-") {
+			return nil, errors.New("comment required")
+		}
 	}
+
 	if *file == "" {
 		fmt.Println("Error: -f flag is required")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("file path is required")
 	}
 
 	if *line < 0 {
 		fmt.Println("Error: -l must be a non-negative integer")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("line number must be a non-negative integer")
 	}
 

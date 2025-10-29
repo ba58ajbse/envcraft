@@ -69,3 +69,43 @@ func Test_makeNewLines(t *testing.T) {
 		})
 	}
 }
+
+func TestParseCommentOptions(t *testing.T) {
+	tests := map[string]struct {
+		opts    []string
+		want    *CommentOptions
+		wantErr bool
+	}{
+		"value before flags": {
+			opts:    []string{"comment", "-f", "test.env", "-l", "3"},
+			want:    &CommentOptions{Value: "comment", FilePath: "test.env", Line: 3},
+			wantErr: false,
+		},
+		"flags before value": {
+			opts:    []string{"-f", "test.env", "-l", "3", "comment"},
+			want:    &CommentOptions{Value: "comment", FilePath: "test.env", Line: 3},
+			wantErr: false,
+		},
+		"missing value": {
+			opts:    []string{"-f", "test.env"},
+			want:    nil,
+			wantErr: true,
+		},
+		"missing file": {
+			opts:    []string{"comment"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := ParseCommentOptions(tt.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
