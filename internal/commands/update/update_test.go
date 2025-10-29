@@ -55,3 +55,43 @@ func Test_makeNewLines(t *testing.T) {
 		})
 	}
 }
+
+func TestParseUpdateOptions(t *testing.T) {
+	tests := map[string]struct {
+		opts    []string
+		want    *UpdateOptions
+		wantErr bool
+	}{
+		"key value before flags": {
+			opts:    []string{"KEY", "VALUE", "-f", "test.env"},
+			want:    &UpdateOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env"},
+			wantErr: false,
+		},
+		"flags before key value": {
+			opts:    []string{"-f", "test.env", "KEY", "VALUE"},
+			want:    &UpdateOptions{Key: "KEY", Value: "VALUE", FilePath: "test.env"},
+			wantErr: false,
+		},
+		"missing value": {
+			opts:    []string{"KEY", "-f", "test.env"},
+			want:    nil,
+			wantErr: true,
+		},
+		"missing file": {
+			opts:    []string{"KEY", "VALUE"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := ParseUpdateOptions(tt.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

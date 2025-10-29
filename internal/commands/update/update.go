@@ -149,15 +149,27 @@ func ParseUpdateOptions(opts []string) (*UpdateOptions, error) {
 	flagSet := flag.NewFlagSet("update", flag.ContinueOnError)
 	file := flagSet.String("f", "", "Path to .env file")
 
-	if len(opts) < 2 {
-		return nil, errors.New("key and value are required")
-	}
-	key := opts[0]
-	value := opts[1]
-	flags := opts[2:]
+	var key, value string
 
-	if err := flagSet.Parse(flags); err != nil {
-		return nil, err
+	if len(opts) >= 2 && !strings.HasPrefix(opts[0], "-") && !strings.HasPrefix(opts[1], "-") {
+		key = opts[0]
+		value = opts[1]
+		if err := flagSet.Parse(opts[2:]); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := flagSet.Parse(opts); err != nil {
+			return nil, err
+		}
+		args := flagSet.Args()
+		if len(args) < 2 {
+			return nil, errors.New("key and value are required")
+		}
+		key = args[0]
+		value = args[1]
+		if strings.HasPrefix(key, "-") || strings.HasPrefix(value, "-") {
+			return nil, errors.New("key and value are required")
+		}
 	}
 	if *file == "" {
 		fmt.Println("Error: -f flag is required")
