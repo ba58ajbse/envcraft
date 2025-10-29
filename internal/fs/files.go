@@ -21,7 +21,9 @@ func ReadLines(filePath string) ([]string, error) {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				lines = append(lines, line)
+				if len(line) > 0 || len(lines) == 0 {
+					lines = append(lines, line)
+				}
 				break
 			}
 			return nil, fmt.Errorf("error reading file %s: %w", filePath, err)
