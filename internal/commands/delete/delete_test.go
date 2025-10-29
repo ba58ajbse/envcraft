@@ -68,3 +68,43 @@ func Test_makeNewLines(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDeleteOptions(t *testing.T) {
+	tests := map[string]struct {
+		opts    []string
+		want    *DeleteOptions
+		wantErr bool
+	}{
+		"key before flags": {
+			opts:    []string{"KEY", "-f", "test.env"},
+			want:    &DeleteOptions{Key: "KEY", FilePath: "test.env"},
+			wantErr: false,
+		},
+		"flags before key": {
+			opts:    []string{"-f", "test.env", "KEY"},
+			want:    &DeleteOptions{Key: "KEY", FilePath: "test.env"},
+			wantErr: false,
+		},
+		"missing key": {
+			opts:    []string{"-f", "test.env"},
+			want:    nil,
+			wantErr: true,
+		},
+		"missing file": {
+			opts:    []string{"KEY"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := ParseDeleteOptions(tt.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

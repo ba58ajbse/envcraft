@@ -145,21 +145,33 @@ func (s *DeleteCmd) keyEqual(key string) bool {
 
 // ParseDeleteOptions parses command-line arguments and returns an DeleteOptions struct.
 func ParseDeleteOptions(opts []string) (*DeleteOptions, error) {
-	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
-	file := fs.String("f", "", "Path to .env file")
+	flagSet := flag.NewFlagSet("delete", flag.ContinueOnError)
+	file := flagSet.String("f", "", "Path to .env file")
 
-	if len(opts) < 2 {
-		return nil, errors.New("key is required")
-	}
-	key := opts[0]
-	flags := opts[1:]
+	var key string
 
-	if err := fs.Parse(flags); err != nil {
-		return nil, err
+	if len(opts) >= 1 && !strings.HasPrefix(opts[0], "-") {
+		key = opts[0]
+		if err := flagSet.Parse(opts[1:]); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := flagSet.Parse(opts); err != nil {
+			return nil, err
+		}
+		args := flagSet.Args()
+		if len(args) < 1 {
+			return nil, errors.New("key is required")
+		}
+		key = args[0]
+		if strings.HasPrefix(key, "-") {
+			return nil, errors.New("key is required")
+		}
 	}
+
 	if *file == "" {
 		fmt.Println("Error: -f flag is required")
-		fs.Usage()
+		flagSet.Usage()
 		return nil, errors.New("file path is required")
 	}
 
